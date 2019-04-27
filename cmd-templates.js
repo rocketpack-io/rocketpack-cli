@@ -1,4 +1,5 @@
-var request = require('request');
+const request = require('request');
+const cTable = require('console.table');
 
 module.exports = {
     getTemplate : function (tag) {
@@ -16,11 +17,8 @@ module.exports = {
                     .filter(x => x.name.startsWith('template'))
                     .map(x => ({ name: x.name, description: x.description, updated_at: x.updated_at }));
                 // print templates
-                console.log('template\ttags\tdescription')
-                templateRepos.map(x => {
-                    console.log(x.name.substring(9) + '\t' + x.name + '\t' + x.description)
-                })
-                
+                console.log('Here is the list of available startup templates:\r\n')
+                console.table(templateRepos);
             } else {
                 console.log('error occured when get templates list:', error);
             }
