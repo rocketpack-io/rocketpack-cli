@@ -3,6 +3,11 @@
 const program = require('commander');
 const templates = require('./cmd-templates')
 const handleCreate = require('./cmd-create')
+const cmdProject = require('./commands/project')
+const cmdLogin = require('./commands/login')
+
+program
+    .version('0.0.1', '-v, --version')
 
 program
     .command('templates [tag]')
@@ -19,5 +24,7 @@ program
         handleCreate(options);
     });
 
-program.parse(process.argv);
+cmdLogin(program);
+cmdProject(program);
 
+program.parse(process.argv);

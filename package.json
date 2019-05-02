@@ -11,12 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.18.0",
     "commander": "^2.20.0",
     "console.table": "^0.10.0",
     "fs-extra": "^7.0.1",
+    "get-installed-path": "^4.0.8",
     "inquirer": "^6.3.1",
     "nodegit": "^0.24.2",
-    "request": "^2.88.0",
     "string": "^3.3.3"
   }
 }
