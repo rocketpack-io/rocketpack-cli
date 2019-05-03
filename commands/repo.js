@@ -2,9 +2,38 @@ const fse = require('fs-extra')
 const path = require('path')
 const git = require("nodegit")
 const S = require('string')
+const cTable = require('console.table');
+const ajax = require('../utils/ajax')
+const utils = require('../utils/misc')
 
-module.exports = function (options) {
-    Promise.resolve(options)
+module.exports = function (program) {
+    program
+        .command('repo-templates [tag]')
+        .action(handleTemplates);
+
+    program
+        .command('repo-clone <name> <template>')
+        .description('clone a template and creates a new repository')
+        .action(handleCreate);
+}
+
+function handleTemplates(tag) {
+    // fetch repos from github
+    ajax.get('https://api.github.com/orgs/rocketpack-io/repos').then(result => {
+        var repos = result.data;
+        var templateRepos = repos
+            .filter(x => x.name.startsWith('template'))
+            .map(x => ({ name: x.name, description: x.description, updated_at: x.updated_at }));
+        // print templates
+        console.log('Here is the list of available startup templates:\r\n')
+        console.table(templateRepos);
+    }).catch(error => {
+        console.log('error occured when get templates list:', error);
+    });
+}
+
+function handleCreate(name, template, cmd) {
+    Promise.resolve({ name, template, cmd })
         .then(checkProjectFolderDoesNotExists)
         .then(cloneTemplateRepository)
         .then(replaceValues)
@@ -30,6 +59,7 @@ function cloneTemplateRepository(options) {
     var projectPath = path.resolve('./' + options.name);
     var projectPathTemp = projectPath + '_temp';
     return new Promise(function (resolve, reject) {
+        console.log('Downloading repository...');
         git.Clone(templateRepoUrl, projectPathTemp).then(function (repository) {
             try {
                 fse.moveSync(path.join(projectPathTemp, 'template'), projectPath);
@@ -47,11 +77,12 @@ function cloneTemplateRepository(options) {
 }
 
 function replaceValues(options) {
+    console.log('Initializing the repository...')
     return new Promise(function (resolve, reject) {
         try {
             // create a list of all files
             var projectPath = path.resolve('./' + options.name);
-            var files = _getFilesRecursive(projectPath);
+            var files = utils.getFilesRecursive(projectPath);
             // render template
             var replacements = {
                 'name': options.name
@@ -72,24 +103,9 @@ function replaceValues(options) {
 }
 
 function successfullFinish(options) {
-    console.log('Project created successfully.')
+    console.log('Repository created successfully.')
 }
 
 
 // Helpers
 
-const getFileIgnoreDirs = 'node_modules,dist'.split(',')
-function _getFilesRecursive(dir) {
-    var files = [];
-    fse.readdirSync(dir).map(x => {
-        var p = path.join(dir, x);
-        if ( fse.lstatSync(p).isDirectory() ) {
-            if ( getFileIgnoreDirs.indexOf(x) < 0 ) {
-                _getFilesRecursive(p).map(y => files.push(y));
-            }
-        } else {
-            files.push(p);
-        }
-    });
-    return files;
-}
